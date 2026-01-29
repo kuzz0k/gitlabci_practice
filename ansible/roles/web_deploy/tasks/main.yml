@@ -1,0 +1,31 @@
+---
+- name: Install rsync
+  ansible.builtin.package:
+    name: rsync
+    state: present
+
+- name: Create www-data group
+  ansible.builtin.group:
+    name: www-data
+    state: present
+
+- name: Create deploy_user
+  ansible.builtin.user:
+    name: deploy_user
+    shell: /bin/bash
+    groups: www-data
+    append: yes
+
+- name: All authorized_keys
+  ansible.builtin.authorized_key:
+    user: deploy_user
+    state: present
+    key: "{{ hostvars['localhost']['deploy_pub_key'] }}"
+
+- name: Prepare folder for static files
+  ansible.builtin.file:
+    path: /var/www/static_site
+    state: directory
+    owner: deploy_user
+    group: www-data
+    mode: '0775'  

@@ -4,6 +4,7 @@
   become: yes
   roles:
     - gitlab_deploy
+    - setup_runner
 
 - name: Configure Web servers
   hosts: web

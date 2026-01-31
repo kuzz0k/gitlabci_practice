@@ -1,0 +1,40 @@
+#SPDX-License-Identifier: MIT-0
+---
+# tasks file for setup_runner
+- name: Install dependencies
+  ansible.builtin.apt:
+    name:
+      - curl
+      - ca-certificates
+    state: present
+    update_cache: yes
+
+- name: Add official repo (run installer script)
+  ansible.builtin.shell: |
+    curl -L "https://packages.gitlab.com/install/repositories/runner/gitlab-runner/script.deb.sh" | sudo bash
+  args:
+    creates: /etc/apt/sources.list.d/runner_gitlab-runner.list
+  become: true
+
+- name: Install runner
+  ansible.builtin.apt:
+    name: gitlab-runner
+    state: present
+    update_cache: yes
+  become: true
+
+- name: Check if runner exists
+  ansible.builtin.command: gitlab-runner list
+  register: runner_list
+  changed_when: false
+
+- name: Register runner
+  ansible.builtin.command:
+    cmd: >
+      gitlab-runner register
+      --non-interactive
+      --url "http://{{ gitlab_ip }}:{{ gitlab_port }}/" 
+      --token "{{ gitlab_runner_token }}"
+      --executor "shell"
+      --description "My Ansible Project Runner"
+  when: "'My Ansible Project Runner' not in runner_list.stderr"
